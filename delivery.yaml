@@ -11,8 +11,4 @@ build_steps:
   cmd: |
     image=registry.opensource.zalan.do/teapot/external-dns:$(git describe --always --dirty --tags)
     docker build --tag $image .
-    IS_PR_BUILD=${CDP_PULL_REQUEST_NUMBER+"true"}
-    if [[ ${CDP_TARGET_BRANCH} == "master" && ${IS_PR_BUILD} != "true" ]]
-    then
-      docker push $image
-    fi
+    docker push $image
