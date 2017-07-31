@@ -42,11 +42,11 @@ Services exposed via `type=LoadBalancer` and for the hostnames defined in Ingres
 
 There are three sources of information for ExternalDNS to decide on DNS name. ExternalDNS will pick one in order as listed below: 
 
-1. For ingress objects ExternalDNS will create a DNS record based on the host specified for the ingress object. For services ExternalDNS will look for the annotation `external-dns.alpha.kubernetes.io/hostname` on the service and use the corresponding value. 
+1. For ingress objects ExternalDNS will create a DNS record based on the host specified for the ingress object. For services ExternalDNS will look for the annotation `external-dns.alpha.kubernetes.io/hostname` on the service and use the corresponding value.
 
 2. If compatibility mode is enabled (e.g. `--compatibility={mate,molecule}` flag), External DNS will parse annotations used by Zalando/Mate, wearemolecule/route53-kubernetes. Compatibility mode with Kops DNS Controller is planned to be added in the future.
 
-3. If `--fqdn-template` flag is specified, e.g. `--fqdn-template={{.Name}}.my-org.com`, ExternalDNS will use service/ingress specifications for the provided template to generate DNS name. 
+3. If `--fqdn-template` flag is specified, e.g. `--fqdn-template={{.Name}}.my-org.com`, ExternalDNS will use service/ingress specifications for the provided template to generate DNS name.
 
 ### Which Service and Ingress controllers are supported?
 
@@ -57,12 +57,18 @@ Regarding Ingress, we'll support:
 * nginx-ingress-controller v0.9.x with a fronting Service
 * Zalando's [AWS Ingress controller](https://github.com/zalando-incubator/kube-ingress-aws-controller), based on AWS ALBs and [Skipper](https://github.com/zalando/skipper)
 
-### What about those other implementations?
+### Are other Ingress Controllers supported?
+
+For Ingress objects, ExternalDNS will attempt to discover the target hostname of the relevant Ingress Controller automatically. If you are using an Ingress Controller that is not listed above you may have issues with ExternalDNS not discovering Endpoints and consequently not creating any DNS records. As a workaround, it is possible to force create an Endpoint by manually specifying a target host/IP for the records to be created by setting the annotation `external-dns.alpha.kubernetes.io/target` in the Ingress object. 
+
+Note that the hostname specified in the Ingress object's annotation must already exist. (i.e.: You have a Service resource for your Ingress Controller with the `external-dns.alpha.kubernetes.io/hostname` annotation set to the same value.)
+
+### What about those other projects?
 
 ExternalDNS is a joint effort to unify different projects accomplishing the same goals, namely:
 
 * Kops' [DNS Controller](https://github.com/kubernetes/kops/tree/master/dns-controller)
-* Zalando's [Mate](https://github.com/zalando-incubator/mate)
+* Zalando's [Mate](https://github.com/linki/mate)
 * Molecule Software's [route53-kubernetes](https://github.com/wearemolecule/route53-kubernetes)
 
 We strive to make the migration from these implementations a smooth experience. This means that, for some time, we'll support their annotation semantics in ExternalDNS and allow both implementations to run side-by-side. This enables you to migrate incrementally and slowly phase out the other implementation.
@@ -79,8 +85,24 @@ For now ExternalDNS uses TXT records to label owned records, and there might be 
 
 ### Does anyone use ExternalDNS in production?
 
-Yes — Zalando replaced [Mate](https://github.com/zalando-incubator/mate) with ExternalDNS since its v0.3 release, which now runs in production-level clusters. We are planning to document a step-by-step tutorial on how the switch from Mate to ExternalDNS has occured.
+Yes — Zalando replaced [Mate](https://github.com/linki/mate) with ExternalDNS since its v0.3 release, which now runs in production-level clusters. We are planning to document a step-by-step tutorial on how the switch from Mate to ExternalDNS has occured.
 
 ### How can we start using ExternalDNS?
 
 Check out the following decriptive tutorials on how to run ExternalDNS in [GKE](tutorials/gke.md) and [AWS](tutorials/aws.md). 
+
+### I have a Service/Ingress but it's ignored by ExternalDNS. Why?
+
+TODO (https://github.com/kubernetes-incubator/external-dns/issues/267)
+
+### I'm using an ELB with TXT registry but the CNAME record clashes with the TXT record. How to avoid this?
+
+TODO (https://github.com/kubernetes-incubator/external-dns/issues/262)
+
+### Which permissions do I need when running ExternalDNS on a GCE or GKE node.
+
+You need to add either https://www.googleapis.com/auth/ndev.clouddns.readwrite or https://www.googleapis.com/auth/cloud-platform on your instance group's scope.
+
+### How can I run ExternalDNS under a specific GCP Service Account, e.g. to access DNS records in other projects?
+
+Have a look at https://github.com/linki/mate/blob/v0.6.2/examples/google/README.md#permissions
